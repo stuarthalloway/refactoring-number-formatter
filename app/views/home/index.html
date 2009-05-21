@@ -1,2 +1,31 @@
-<h1>Hello</h1>
+<h1>Number Formatting Demo</h1>
 
+<div style="margin-bottom: 2em;">
+<form id="form">
+  <input type="text" name="value" id="value"></input>
+  <input type="submit" name="submit" id="submit" value="Format"></input>
+</form>
+</div>
+
+<% codes = ["us", "de"] %>
+
+<table class="span-5">
+  <% codes.each do |code| %>
+    <tr class="<%= cycle('', 'striped') %> row">
+      <td><%= code %></td><td id="<%= code %>" class="result">&nbsp;</td>
+    </tr>
+  <% end %>
+</table>
+
+<script type="text/javascript">
+  function update() {
+    $(".result").text($("#value").val());
+    <% codes.each do |code| %>
+      $("#<%= code %>").format({format: "#,###.00", locale: "<%= code %>"});
+    <% end %>
+  }
+  $("#form").submit(function () {
+    update();
+    return false;
+  });
+</script>
