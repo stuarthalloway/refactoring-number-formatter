@@ -136,38 +136,17 @@
 
     };  
 
-    function parseOptionsFormat(options) { 
-      var validFormat = "0#-,.";
-	
-      // strip all the invalid characters at the beginning and the end
-      // of the format, and we'll stick them back on at the end
-      // make a special case for the negative sign "-" though, so
-      // we can have formats like -$23.32   
-      options.prefix = "";
-      options.negativeInFront = false;
-      for (var i=0; i<options.format.length; i++)
-      {
-         if (validFormat.indexOf(options.format.charAt(i))==-1)
-             options.prefix = options.prefix + options.format.charAt(i);
-         else if (i==0 && options.format.charAt(i)=='-')
-         {
-            options.negativeInFront = true;
-            continue;
-         }
-         else
-             break;
-      }
-      options.suffix = "";
-      for (var i=options.format.length-1; i>=0; i--)
-      {
-         if (validFormat.indexOf(options.format.charAt(i))==-1)
-             options.suffix = options.format.charAt(i) + options.suffix;
-         else
-             break;
-      }
-
-      options.format = options.format.substring(options.prefix.length);
-      options.format = options.format.substring(0, options.format.length - options.suffix.length);
+    // strip all the invalid characters at the beginning and the end
+    // of the format, and we'll stick them back on at the end
+    // make a special case for the negative sign "-" though, so
+    // we can have formats like -$23.32   
+    function parseOptionsFormat(options) {
+      var match = /^(-?)([^-0#,.]*)([-0#,.]*)([^-0#,.]*)$/.exec(options.format)
+			if (!match) throw "invalid number format " + options.format;
+      options.negativeInFront = (match[1] == "-");
+      options.prefix = match[2];
+      options.format = match[3];
+      options.suffix = match[4];
     };
 
  jQuery.formatNumber = function(number, options) {
@@ -230,7 +209,7 @@
  jQuery.fn.format = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.format.defaults, options);
-		 parseOptionsFormat(options);
+		 parseOptionsFormat(options); 
 
      var formatData = formatCodes(options.locale.toLowerCase());
 

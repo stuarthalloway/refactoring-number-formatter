@@ -34,10 +34,9 @@ Screw.Unit(function(){
       expect($("#value").text()).to(equal, "-$500000.8");
     });
 
-    it("does nothing if it finds non-format characters in the middle", function(){
+    it("throws up if it finds non-format characters in the middle", function(){
       $("#value").text("767");
-      $("#value").format({format: "## AND ##"});
-      expect($("#value").text()).to(equal, "767");
+      expect(function () {$("#value").format({format: "## AND ##"})}).to(throw_object, "invalid number format ## AND ##");
     });
 
     it("default to not show decimal for whole numbers", function(){

@@ -68,6 +68,24 @@ Screw.Matchers = (function($) {
         return 'expected ' + $.print(actual) + (not ? ' to not ' : ' to ') + 'be less than ' + $.print(expected);
       }
     },
+    
+    // TODO: add to Screw.Unit
+    throw_object: {
+      match: function(object, actual_fn) {
+        actual_fn._last_err = "[no error]";
+        try {
+          actual_fn();
+          return false;
+        } catch (e) {
+          actual_fn._last_err = e;
+          return e === object;
+        }
+      },
+      
+      failure_message: function(expected_exc, actual_fn, not) {
+        return 'expected ' + $.print(actual_fn) + (not ? ' to not ' : ' to ') + 'throw ' + $.print(expected_exc) + ' not "' + actual_fn._last_err + '"';
+      }
+    },
 
     be_lte: {
       match: function(expected, actual) {
