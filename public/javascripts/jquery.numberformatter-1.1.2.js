@@ -134,6 +134,40 @@
 
         return new FormatData(dec, group, neg);
 
+    };  
+
+    function parseOptionsFormat(options) { 
+      var validFormat = "0#-,.";
+	
+      // strip all the invalid characters at the beginning and the end
+      // of the format, and we'll stick them back on at the end
+      // make a special case for the negative sign "-" though, so
+      // we can have formats like -$23.32   
+      options.prefix = "";
+      options.negativeInFront = false;
+      for (var i=0; i<options.format.length; i++)
+      {
+         if (validFormat.indexOf(options.format.charAt(i))==-1)
+             options.prefix = options.prefix + options.format.charAt(i);
+         else if (i==0 && options.format.charAt(i)=='-')
+         {
+            options.negativeInFront = true;
+            continue;
+         }
+         else
+             break;
+      }
+      options.suffix = "";
+      for (var i=options.format.length-1; i>=0; i--)
+      {
+         if (validFormat.indexOf(options.format.charAt(i))==-1)
+             options.suffix = options.format.charAt(i) + options.suffix;
+         else
+             break;
+      }
+
+      options.format = options.format.substring(options.prefix.length);
+      options.format = options.format.substring(0, options.format.length - options.suffix.length);
     };
 
  jQuery.formatNumber = function(number, options) {
@@ -196,6 +230,7 @@
  jQuery.fn.format = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.format.defaults, options);
+		 parseOptionsFormat(options);
 
      var formatData = formatCodes(options.locale.toLowerCase());
 
@@ -203,52 +238,19 @@
      var group = formatData.group;
      var neg = formatData.neg;
 
-     var validFormat = "0#-,.";
-
      return this.each(function(){
 
-         var text = new String(jQuery(this).text());
-         if (jQuery(this).is(":input"))
-            text = new String(jQuery(this).val());
-
-         // strip all the invalid characters at the beginning and the end
-         // of the format, and we'll stick them back on at the end
-         // make a special case for the negative sign "-" though, so
-         // we can have formats like -$23.32
-         var prefix = "";
-         var negativeInFront = false;
-         for (var i=0; i<options.format.length; i++)
-         {
-            if (validFormat.indexOf(options.format.charAt(i))==-1)
-                prefix = prefix + options.format.charAt(i);
-            else if (i==0 && options.format.charAt(i)=='-')
-            {
-               negativeInFront = true;
-               continue;
-            }
-            else
-                break;
-         }
-         var suffix = "";
-         for (var i=options.format.length-1; i>=0; i--)
-         {
-            if (validFormat.indexOf(options.format.charAt(i))==-1)
-                suffix = options.format.charAt(i) + suffix;
-            else
-                break;
-         }
-
-         options.format = options.format.substring(prefix.length);
-         options.format = options.format.substring(0, options.format.length - suffix.length);
-
-
+       var text = new String(jQuery(this).text());
+       if (jQuery(this).is(":input"))
+         text = new String(jQuery(this).val());
+       
         // now we need to convert it into a number
         while (text.indexOf(group)>-1)
                text = text.replace(group,'');
         var number = new Number(text.replace(dec,".").replace(neg,"-"));
 
         // special case for percentages
-        if (suffix == "%")
+        if (options.suffix == "%")
            number = number * 100;
 
         var returnString = "";
@@ -330,9 +332,9 @@
 
         // handle special case where negative is in front of the invalid
         // characters
-        if (number < 0 && negativeInFront && prefix.length > 0)
+        if (number < 0 && options.negativeInFront && options.prefix.length > 0)
         {
-           prefix = neg + prefix;
+           options.prefix = neg + options.prefix;
         }
         else if (number < 0)
         {
@@ -344,7 +346,7 @@
                 returnString = returnString.substring(0, returnString.length - 1);
             }
         }
-        returnString = prefix + returnString + suffix;
+        returnString = options.prefix + returnString + options.suffix;
 
         if (jQuery(this).is(":input"))
            jQuery(this).val(returnString);
