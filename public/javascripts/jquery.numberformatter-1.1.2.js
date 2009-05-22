@@ -149,19 +149,6 @@
       options.suffix = match[4];
     };
 
- jQuery.formatNumber = function(number, options) {
-     var options = jQuery.extend({},jQuery.fn.parse.defaults, options);
-     var formatData = formatCodes(options.locale.toLowerCase());
-
-     var dec = formatData.dec;
-     var group = formatData.group;
-     var neg = formatData.neg;
-
-     var numString = new String(number);
-     numString = numString.replace(".",dec).replace("-",neg);
-     return numString;
- };
-
  jQuery.fn.parse = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.parse.defaults, options);
