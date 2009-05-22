@@ -1,5 +1,4 @@
 require("spec_helper.js");
-require("../../public/javascripts/jquery-1.3.2.js");
 require("../../public/javascripts/jquery.numberformatter-1.1.2.js");
 
 Screw.Unit(function(){  
@@ -20,8 +19,23 @@ Screw.Unit(function(){
     });
 
     it("extracts a number with a specified group delimiter", function(){
-      $("#value").text("111.222.333");
-      expect($("#value").parse({locale: "de"})).to(equal, [111222333]);
+      $("#value").text("444.555.666");
+      expect($("#value").parse({locale: "de"})).to(equal, [444555666]);
+    });
+
+    it("knows all the valid number characters", function(){
+      $("#value").text("-123,456.789");
+      expect($("#value").parse()).to(equal, [-123456.789]);
+    });
+
+    it("ignores junk at the end", function(){
+      $("#value").text("36XL");
+      expect($("#value").parse()[0]).to(equal, 36);
+    });
+
+    it("ignores everything after the first non-number character", function(){
+      $("#value").text("14 to 16");
+      expect($("#value").parse()[0]).to(equal, 14);
     });
   });
   
@@ -95,6 +109,12 @@ Screw.Unit(function(){
       $("#value").text("123,456,789");
       $("#value").format({format: "#"});
       expect($("#value").text()).to(equal, "123456789");
+    });
+
+    it("handles numbers that already contain non-us formatting", function(){
+      $("#value").text("987.654.321");
+      $("#value").format({locale: "de"});
+      expect($("#value").text()).to(equal, "987.654.321,00");
     });
 
     it("handles numbers that already contain *bad* formatting", function(){

@@ -164,30 +164,19 @@
      var array = [];
      this.each(function(){
 
-         var text = new String(jQuery(this).text());
-         if (jQuery(this).is(":input"))
-            text = new String(jQuery(this).val());
+       var text = new String(jQuery(this).valOrText());
+       text = text.replace(new RegExp('[' + group + ']', "g"), "")
+                  .replace(dec, ".")
+                  .replace(neg, "-");
+       var hasPercent = (text.charAt(text.length-1)=="%");
+       var number = parseFloat(text, 10);
+       if (hasPercent)
+       {
+          number = number / 100;
+          number = number.toFixed(text.length-1);
+       }
+       array.push(number);      
 
-         // now we need to convert it into a number
-         while (text.indexOf(group)>-1)
-               text = text.replace(group,'');
-         text = text.replace(dec,".").replace(neg,"-");
-         var validText = "";
-         var hasPercent = false;
-         if (text.charAt(text.length-1)=="%")
-             hasPercent = true;
-         for (var i=0; i<text.length; i++)
-         {
-            if (valid.indexOf(text.charAt(i))>-1)
-               validText = validText + text.charAt(i);
-         }
-         var number = new Number(validText);
-         if (hasPercent)
-         {
-            number = number / 100;
-            number = number.toFixed(validText.length-1);
-         }
-         array.push(number);
      });
 
      return array;
@@ -214,9 +203,9 @@
        
         // now we need to convert it into a number
         // technical debt: what happens to numbers with more than one decimal or negative sign?
-        var number = new Number(text.replace(new RegExp(group, "g"), "")
+        var number = parseFloat(text.replace(new RegExp('[' + group + ']', "g"), "")
                                     .replace(dec,".")
-                                    .replace(neg,"-"));
+                                    .replace(neg,"-"), 10);
 
         // special case for percentages
         if (options.suffix == "%")
