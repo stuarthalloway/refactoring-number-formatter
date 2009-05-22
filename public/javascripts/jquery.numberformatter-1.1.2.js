@@ -205,7 +205,11 @@
 
      return array;
  };
-
+        
+ jQuery.fn.valOrText = function() {
+   return (jQuery(this).is(":input") ? jQuery.fn.val : jQuery.fn.text).apply(this,arguments);
+ };
+ 
  jQuery.fn.format = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.format.defaults, options);
@@ -219,9 +223,7 @@
 
      return this.each(function(){
 
-       var text = new String(jQuery(this).text());
-       if (jQuery(this).is(":input"))
-         text = new String(jQuery(this).val());
+       var text = new String(jQuery(this).valOrText());
        
         // now we need to convert it into a number
         while (text.indexOf(group)>-1)
@@ -327,11 +329,7 @@
         }
         returnString = options.prefix + returnString + options.suffix;
 
-        if (jQuery(this).is(":input"))
-           jQuery(this).val(returnString);
-        else
-           jQuery(this).text(returnString);
-
+        jQuery(this).valOrText(returnString);
      });
  };
 
