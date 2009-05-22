@@ -2,7 +2,29 @@ require("spec_helper.js");
 require("../../public/javascripts/jquery-1.3.2.js");
 require("../../public/javascripts/jquery.numberformatter-1.1.2.js");
 
-Screw.Unit(function(){
+Screw.Unit(function(){  
+  describe("parse", function() {
+    it("extracts a plain number", function(){
+      $("#value").text("777");
+      expect($("#value").parse()).to(equal, [777]);
+    });
+
+    it("extracts a number with a decimal", function(){
+      $("#value").text("333.55");
+      expect($("#value").parse()).to(equal, [333.55]);
+    });
+
+    it("extracts a number with the standard group delimiter", function(){
+      $("#value").text("111,222,333");
+      expect($("#value").parse()).to(equal, [111222333]);
+    });
+
+    it("extracts a number with a specified group delimiter", function(){
+      $("#value").text("111.222.333");
+      expect($("#value").parse({locale: "de"})).to(equal, [111222333]);
+    });
+  });
+  
   describe("format", function(){
     it("defaults to us #,###.00", function(){
       $("#value").text(1999);
