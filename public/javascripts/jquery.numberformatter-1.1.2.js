@@ -123,20 +123,51 @@
       }                   
       return str;
     };
+
+    nf.countDecimalDigits = function(format) {
+      var match = format.match(/\.[#0]+/)      
+      if (match) {
+        return match[0].length - 1;
+      }
+      return 0;
+    };
     
-    jQuery.numberFormatter.formatNumber = function(str, options) {
+    nf.countDigitsPerGroup = function(format) {
+      var match = format.match(/,(.*?)(\.|$)/)
+      if (match) {
+        return match[1].length;
+      }
+      return null;
+    }
+    
+    // strip all the invalid characters at the beginning and the end
+    // of the format, and we'll stick them back on at the end
+    // make a special case for the negative sign "-" though, so
+    // we can have formats like -$23.32   
+    nf.normalizeOptions = function(options) {
+      var match = /^(-?)([^-0#,.]*)([-0#,.]*)([^-0#,.]*)$/.exec(options.format)
+			if (!match) throw "invalid number format " + options.format;
+      options.negativeInFront = (match[1] == "-");
+      options.prefix = match[2];
+      options.format = match[3]; 
+      options.suffix = match[4];
+      options.decimalDigits = nf.countDecimalDigits(options.format);
+      options.digitsPerGroup = nf.countDigitsPerGroup(options.format);
+    };
+    
+    nf.formatNumber = function(str, options) {
       var left_right = str.split(".");
       var left = left_right[0];
       var right = left_right[1]; 
-      options.decimalsRightOfZero = options.decimalsRightOfZero || 0;
-      if (options.grouping) {
-        left = s.reverse(s.join(s.partition(s.reverse(left), options.grouping, options.grouping), options.group));
+      options.decimalDigits = options.decimalDigits || 0;
+      if (options.digitsPerGroup) {
+        left = s.reverse(s.join(s.partition(s.reverse(left), options.digitsPerGroup, options.digitsPerGroup), options.group));
       }
       var result = (left +
                     "." + 
-                    nf.pad(right.substring(0, options.decimalsRightOfZero), options.decimalsRightOfZero, "0")
+                    nf.pad(right.substring(0, options.decimalDigits), options.decimalDigits, "0")
                    ).replace(/\.$/, "");                      
-      if (right.charAt(options.decimalsRightOfZero).match(/[5-9]/)) {
+      if (right.charAt(options.decimalDigits).match(/[5-9]/)) {
         //need to round up
         result = jQuery.numberFormatter.bump(result);
       }
@@ -209,18 +240,6 @@
 
     };  
 
-    // strip all the invalid characters at the beginning and the end
-    // of the format, and we'll stick them back on at the end
-    // make a special case for the negative sign "-" though, so
-    // we can have formats like -$23.32   
-    function parseOptionsFormat(options) {
-      var match = /^(-?)([^-0#,.]*)([-0#,.]*)([^-0#,.]*)$/.exec(options.format)
-			if (!match) throw "invalid number format " + options.format;
-      options.negativeInFront = (match[1] == "-");
-      options.prefix = match[2];
-      options.format = match[3];
-      options.suffix = match[4];
-    };
 
  jQuery.fn.parse = function(options) {
 
@@ -262,7 +281,7 @@
  jQuery.fn.format = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.format.defaults, options);
-		 parseOptionsFormat(options); 
+		 nf.normalizeOptions(options); 
 
      var formatData = formatCodes(options.locale.toLowerCase());
 

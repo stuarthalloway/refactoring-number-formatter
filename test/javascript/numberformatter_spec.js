@@ -2,6 +2,28 @@ require("spec_helper.js");
 require("../../public/javascripts/jquery.numberformatter-1.1.2.js");
 
 Screw.Unit(function(){        
+  describe("numberFormatter.normalizeOptions", function() {
+
+    it("detects required decimal zeros", function() {
+      var options = {format: "##.###0CRAP"}
+      $.numberFormatter.normalizeOptions(options);
+      expect(options.decimalDigits).to(equal, 4);
+    });
+
+    it("detects absence digit groups", function() {
+      var options = {format: "##"}
+      $.numberFormatter.normalizeOptions(options);
+      expect(options.digitsPerGroup).to(equal, null);
+    });
+
+    it("detects presence of digit groups", function() {
+      var options = {format: "#,#####"}
+      $.numberFormatter.normalizeOptions(options);
+      expect(options.digitsPerGroup).to(equal, 5);
+    });
+
+  });
+  
   describe("numberFormatter.bump", function() {
 
     it("bumps", function() {
@@ -14,26 +36,26 @@ Screw.Unit(function(){
     
   });
 
-  describe("numberFormatter.formatRightOfDecimal", function() {
+  describe("numberFormatter.formatNumber", function() {
     
     it("handles zero format digits", function() {
-      expect($.numberFormatter.formatNumber("123.45", {decimalsRightOfZero: 0})).to(equal, "123");
+      expect($.numberFormatter.formatNumber("123.45", {decimalDigits: 0})).to(equal, "123");
     });
 
     it("handles a few format digits", function() {
-      expect($.numberFormatter.formatNumber("0.0136", {decimalsRightOfZero: 2})).to(equal, "0.01");
+      expect($.numberFormatter.formatNumber("0.0136", {decimalDigits: 2})).to(equal, "0.01");
     });
 
     it("handles a lot of format digits", function() {
-      expect($.numberFormatter.formatNumber("1.01234567890001", {decimalsRightOfZero: 14})).to(equal, "1.01234567890001");
+      expect($.numberFormatter.formatNumber("1.01234567890001", {decimalDigits: 14})).to(equal, "1.01234567890001");
     });
 
     it("handles more format digits than actual digits", function() {
-      expect($.numberFormatter.formatNumber("1.5", {decimalsRightOfZero: 8})).to(equal, "1.50000000");
+      expect($.numberFormatter.formatNumber("1.5", {decimalDigits: 8})).to(equal, "1.50000000");
     });
 
     it("rounds correctly", function() {
-      expect($.numberFormatter.formatNumber("1.875", {decimalsRightOfZero: 2})).to(equal, "1.88");
+      expect($.numberFormatter.formatNumber("1.875", {decimalDigits: 2})).to(equal, "1.88");
     });
     
   });
