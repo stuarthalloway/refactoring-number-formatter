@@ -226,9 +226,10 @@
        var text = new String(jQuery(this).valOrText());
        
         // now we need to convert it into a number
-        while (text.indexOf(group)>-1)
-               text = text.replace(group,'');
-        var number = new Number(text.replace(dec,".").replace(neg,"-"));
+        // technical debt: what happens to numbers with more than one decimal or negative sign?
+        var number = new Number(text.replace(new RegExp(group, "g"), "")
+                                    .replace(dec,".")
+                                    .replace(neg,"-"));
 
         // special case for percentages
         if (options.suffix == "%")

@@ -69,5 +69,17 @@ Screw.Unit(function(){
       expect($("#value").text()).to(equal, "-11.13");
     });
 
+    it("handles numbers that already contain formatting", function(){
+      $("#value").text("123,456,789");
+      $("#value").format({format: "#"});
+      expect($("#value").text()).to(equal, "123456789");
+    });
+
+    it("handles numbers that already contain *bad* formatting", function(){
+      $("#value").text("1,2,3,4,5");
+      $("#value").format({format: "#"});
+      expect($("#value").text()).to(equal, "12345");
+    });
+
   });
 });
