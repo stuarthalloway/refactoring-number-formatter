@@ -1,7 +1,43 @@
 require("spec_helper.js");
 require("../../public/javascripts/jquery.numberformatter-1.1.2.js");
 
-Screw.Unit(function(){  
+Screw.Unit(function(){        
+  describe("numberFormatter.bump", function() {
+
+    it("bumps", function() {
+      expect($.numberFormatter.bump("123.45")).to(equal, "123.46");
+    });
+
+    it("carries", function() {
+      expect($.numberFormatter.bump("129.99")).to(equal, "130.00");
+    });
+    
+  });
+
+  describe("numberFormatter.formatRightOfDecimal", function() {
+    
+    it("handles zero format digits", function() {
+      expect($.numberFormatter.formatNumber("123.45", {decimalsRightOfZero: 0})).to(equal, "123");
+    });
+
+    it("handles a few format digits", function() {
+      expect($.numberFormatter.formatNumber("0.0136", {decimalsRightOfZero: 2})).to(equal, "0.01");
+    });
+
+    it("handles a lot of format digits", function() {
+      expect($.numberFormatter.formatNumber("1.01234567890001", {decimalsRightOfZero: 14})).to(equal, "1.01234567890001");
+    });
+
+    it("handles more format digits than actual digits", function() {
+      expect($.numberFormatter.formatNumber("1.5", {decimalsRightOfZero: 8})).to(equal, "1.50000000");
+    });
+
+    it("rounds correctly", function() {
+      expect($.numberFormatter.formatNumber("1.875", {decimalsRightOfZero: 2})).to(equal, "1.88");
+    });
+    
+  });
+  
   describe("parse", function() {
     it("extracts a plain number", function(){
       $("#value").text("777");
@@ -40,6 +76,12 @@ Screw.Unit(function(){
   });
   
   describe("format", function(){
+    it("does not work with numbers with higher precision than floats", function(){
+      $("#value").text("123456789.9876543210123456789");
+      $("#value").format({format: "##.0000000000000000000"});
+      expect($("#value").text()).to_not(equal, "123456789.9876543210123456789");
+    });
+
     it("defaults to us #,###.00", function(){
       $("#value").text(1999);
       $("#value").format();

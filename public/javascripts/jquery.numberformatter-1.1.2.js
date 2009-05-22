@@ -69,7 +69,80 @@
  * Separate positive and negative patterns separated by a ":" (e.g. use (#,###) for accounting)
  * More options may come in the future (currency)
  **/
- (function(jQuery) {
+  (function(jQuery) {
+    jQuery.numberFormatter = {};
+    var nf = jQuery.numberFormatter; 
+    nf.string = {};
+    var s = nf.string;
+    
+    s.reverse = function(str) {
+      var result = "";
+      for (var n=str.length-1; n>=0; n--) {
+        result += str[n];
+      }                  
+      return result;
+    };
+    s.partition = function(str, size, step) {
+      var result = [];
+      for (var pos = 0; pos < str.length; pos+=step) { 
+        result.push(str.substring(pos,pos+size));
+      }
+      return result;
+    };
+    s.join = function(coll, delim) {
+      var result = [];
+      for (var n = 0; n < coll.length; n++) { 
+        result += coll[n];
+        result += delim;
+      }
+      return result.substring(0, result.length - delim.length);
+    }
+    
+    nf.bumpTable = {
+      "0": "1",
+      "1": "2",
+      "2": "3",
+      "3": "4",
+      "4": "5",
+      "5": "6",
+      "6": "7",
+      "7": "8",
+      "8": "9",
+      "9": "0",
+    };
+    nf.bump = function(str) {
+      for (var n=str.length - 1; n >= 0; n--) {
+        str = str.slice(0,n) + (jQuery.numberFormatter.bumpTable[str[n]] || str[n]) + str.substring(n+1);
+        if (str[n].match(/[1-9]/)) break;
+      }
+      return str;
+    };
+    nf.pad = function(str, length, padding) {
+      while (str.length < length) {
+        str = str + padding;
+      }                   
+      return str;
+    };
+    
+    jQuery.numberFormatter.formatNumber = function(str, options) {
+      var left_right = str.split(".");
+      var left = left_right[0];
+      var right = left_right[1]; 
+      options.decimalsRightOfZero = options.decimalsRightOfZero || 0;
+      if (options.grouping) {
+        left = s.reverse(s.join(s.partition(s.reverse(left), options.grouping, options.grouping), options.group));
+      }
+      var result = (left +
+                    "." + 
+                    nf.pad(right.substring(0, options.decimalsRightOfZero), options.decimalsRightOfZero, "0")
+                   ).replace(/\.$/, "");                      
+      if (right.charAt(options.decimalsRightOfZero).match(/[5-9]/)) {
+        //need to round up
+        result = jQuery.numberFormatter.bump(result);
+      }
+      return result;                      
+    }  
+
 
      function FormatData(dec, group, neg) {
        this.dec = dec;
