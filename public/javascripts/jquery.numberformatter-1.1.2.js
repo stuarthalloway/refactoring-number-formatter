@@ -122,10 +122,26 @@
         str = str + padding;
       }                   
       return str;
-    };
+    }; 
+    nf.times100 = function(str) {
+      var result = str + "00";
+      var dotIndex = result.indexOf('.');
+      if (dotIndex != -1) {
+        result = result.substring(0,dotIndex) + result.substring(dotIndex+1, dotIndex+3) + "." + result.substring(dotIndex+3);
+      }                                                                                                                     
+      return result;
+    }
 
     nf.countDecimalDigits = function(format) {
-      var match = format.match(/\.[#0]+/)      
+      var match = format.match(/\.[#0]+0/)      
+      if (match) {
+        return match[0].length - 1;
+      }
+      return 0;
+    };
+
+    nf.countOptionalDecimalDigits = function(format) {
+      var match = format.match(/\.[#0]/)      
       if (match) {
         return match[0].length - 1;
       }
@@ -145,6 +161,7 @@
     // make a special case for the negative sign "-" though, so
     // we can have formats like -$23.32   
     nf.normalizeOptions = function(options) {
+      var options = jQuery.extend({},jQuery.fn.format.defaults, options);
       var match = /^(-?)([^-0#,.]*)([-0#,.]*)([^-0#,.]*)$/.exec(options.format)
 			if (!match) throw "invalid number format " + options.format;
       options.negativeInFront = (match[1] == "-");
@@ -152,20 +169,42 @@
       options.format = match[3]; 
       options.suffix = match[4];
       options.decimalDigits = nf.countDecimalDigits(options.format);
-      options.digitsPerGroup = nf.countDigitsPerGroup(options.format);
+      options.optionalDecimalDigits = nf.countOptionalDecimalDigits(options.format);
+      options.digitsPerGroup = nf.countDigitsPerGroup(options.format);  
+      
+      var formatData = formatCodes(options.locale.toLowerCase());
+      options.dec = formatData.dec;
+      options.group = formatData.group;
+      options.neg = formatData.neg; 
+      return options;
     };
     
-    nf.formatNumber = function(str, options) {
-      var left_right = str.split(".");
-      var left = left_right[0];
-      var right = left_right[1]; 
-      options.decimalDigits = options.decimalDigits || 0;
+    // called only by formatNumber         
+    // inserts grouping punctuation, e.g. 12345 => 12,345
+    nf.formatLeft = function(left, options) {
       if (options.digitsPerGroup) {
-        left = s.reverse(s.join(s.partition(s.reverse(left), options.digitsPerGroup, options.digitsPerGroup), options.group));
-      }
-      var result = (left +
-                    "." + 
-                    nf.pad(right.substring(0, options.decimalDigits), options.decimalDigits, "0")
+        return s.reverse(s.join(s.partition(s.reverse(left), options.digitsPerGroup, options.digitsPerGroup), options.group));
+      } 
+      return left;
+    }
+     
+    // called only by formatNumber, which finishes the job by rounding if necessary
+    // truncates to the correct amount of digits, possibly padding with 0 on the right
+    nf.formatRight = function(right, options) {
+      var digits = Math.max(options.decimalDigits, 
+                            Math.min(options.optionalDecimalDigits || 0, right.length));
+      console.log("" + right + " " + options.decimalDigits + " " + options.optionalDecimalDigits + " " + right.length);                            
+      return nf.pad(right.substring(0, digits), digits, "0");
+    }
+
+    nf.formatNumber = function(str, options) {
+      var match = str.split(/^(-?)(\d*)\.?(\d*?)0*$/);
+      var sign = match[1];
+      var left = match[2];
+      var right = match[3];
+      var result = (nf.formatLeft(left, options) +
+                    options.dec + 
+                    nf.formatRight(right, options)
                    ).replace(/\.$/, "");                      
       if (right.charAt(options.decimalDigits).match(/[5-9]/)) {
         //need to round up
@@ -274,144 +313,59 @@
      return array;
  };
         
- jQuery.fn.valOrText = function() {
-   return (jQuery(this).is(":input") ? jQuery.fn.val : jQuery.fn.text).apply(this,arguments);
- };
+  jQuery.fn.valOrText = function() {
+    return (jQuery(this).is(":input") ? jQuery.fn.val : jQuery.fn.text).apply(this,arguments);
+  };
  
- jQuery.fn.format = function(options) {
+  jQuery.fn.format = function(options) {
 
-     var options = jQuery.extend({},jQuery.fn.format.defaults, options);
-		 nf.normalizeOptions(options); 
+    options = nf.normalizeOptions(options); 
 
-     var formatData = formatCodes(options.locale.toLowerCase());
+    return this.each(function(){
 
-     var dec = formatData.dec;
-     var group = formatData.group;
-     var neg = formatData.neg;
+      var text = new String(jQuery(this).valOrText());
 
-     return this.each(function(){
+      text = text.replace(new RegExp('[' + options.group + ']', "g"), "")
+                 .replace(options.dec,".")
+                 .replace(options.neg,"-");
 
-       var text = new String(jQuery(this).valOrText());
-       
-        // now we need to convert it into a number
-        // technical debt: what happens to numbers with more than one decimal or negative sign?
-        var number = parseFloat(text.replace(new RegExp('[' + group + ']', "g"), "")
-                                    .replace(dec,".")
-                                    .replace(neg,"-"), 10);
-
-        // special case for percentages
-        if (options.suffix == "%")
-           number = number * 100;
-
-        var returnString = "";
-
-        var decimalValue = number % 1;
-        if (options.format.indexOf(".") > -1)
-        {
-           var decimalPortion = dec;
-           var decimalFormat = options.format.substring(options.format.lastIndexOf(".")+1);
-           var decimalString = new String(decimalValue.toFixed(decimalFormat.length));
-           decimalString = decimalString.substring(decimalString.lastIndexOf(".")+1);
-           for (var i=0; i<decimalFormat.length; i++)
-           {
-              if (decimalFormat.charAt(i) == '#' && decimalString.charAt(i) != '0')
-              {
-                 decimalPortion += decimalString.charAt(i);
-                  continue;
-               }
-               else if (decimalFormat.charAt(i) == '#' && decimalString.charAt(i) == '0')
-               {
-                  var notParsed = decimalString.substring(i);
-                  if (notParsed.match('[1-9]'))
-                  {
-                      decimalPortion += decimalString.charAt(i);
-                      continue;
-                  }
-                  else
-                  {
-                      break;
-                  }
-              }
-              else if (decimalFormat.charAt(i) == "0")
-              {
-                 decimalPortion += decimalString.charAt(i);
-              }
-           }
-           returnString += decimalPortion
+      // special case for percentages
+      if (options.suffix == "%") {
+        text = nf.times100(text);
+      }
+      
+      var negative = parseFloat(text, 10) < 0;
+      var returnString = nf.formatNumber(text, options).replace(/^-/,"");
+    
+      // handle special case where negative is in front of the invalid characters
+      if (negative) {
+        if (options.negativeInFront && options.prefix.length > 0) {
+          options.prefix = options.neg + options.prefix;
+        } else {
+          returnString = options.neg + returnString;
         }
-        else
-           number = Math.round(number);
-
-        var ones = Math.floor(number);
-        if (number < 0)
-            ones = Math.ceil(number);
-
-        var onePortion = "";
-        if (ones == 0)
-        {
-           onePortion = "0";
+      } 
+      
+      if (options.decimalSeparatorAlwaysShown) {
+        if (returnString.indexOf(options.dec) == -1) {
+          returnString = returnString + options.dec;
         }
-        else
-        {
-           // find how many digits are in the group
-           var onesFormat = "";
-           if (options.format.indexOf(".") == -1)
-              onesFormat = options.format;
-           else
-              onesFormat = options.format.substring(0, options.format.indexOf("."));
-           var oneText = new String(Math.abs(ones));
-           var groupLength = 9999;
-           if (onesFormat.lastIndexOf(",") != -1)
-               groupLength = onesFormat.length - onesFormat.lastIndexOf(",")-1;
-           var groupCount = 0;
-           for (var i=oneText.length-1; i>-1; i--)
-           {
-             onePortion = oneText.charAt(i) + onePortion;
+      }
+      
+      returnString = options.prefix + returnString + options.suffix;
 
-             groupCount++;
+      jQuery(this).valOrText(returnString);
+    });
+  };
 
-             if (groupCount == groupLength && i!=0)
-             {
-                 onePortion = group + onePortion;
-                 groupCount = 0;
-             }
+  jQuery.fn.parse.defaults = {
+    locale: "us",
+    decimalSeparatorAlwaysShown: false
+  };
 
-           }
-        }
-        returnString = onePortion + returnString;
-
-        // handle special case where negative is in front of the invalid
-        // characters
-        if (number < 0 && options.negativeInFront && options.prefix.length > 0)
-        {
-           options.prefix = neg + options.prefix;
-        }
-        else if (number < 0)
-        {
-           returnString = neg + returnString;
-        }
-
-        if (! options.decimalSeparatorAlwaysShown) {
-            if (returnString.lastIndexOf(dec) == returnString.length - 1) {
-                returnString = returnString.substring(0, returnString.length - 1);
-            }
-        }
-        returnString = options.prefix + returnString + options.suffix;
-
-        jQuery(this).valOrText(returnString);
-     });
- };
-
- jQuery.fn.parse.defaults = {
-      locale: "us",
-      decimalSeparatorAlwaysShown: false
- };
-
- jQuery.fn.format.defaults = {
-      format: "#,###.00",
-      locale: "us",
-      decimalSeparatorAlwaysShown: false
- };
-
-
- })(jQuery);
+  jQuery.fn.format.defaults = {
+    format: "#,###.00",
+    locale: "us",
+    decimalSeparatorAlwaysShown: false
+  };
+})(jQuery);

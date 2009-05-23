@@ -6,20 +6,34 @@ Screw.Unit(function(){
 
     it("detects required decimal zeros", function() {
       var options = {format: "##.###0CRAP"}
-      $.numberFormatter.normalizeOptions(options);
-      expect(options.decimalDigits).to(equal, 4);
+      expect($.numberFormatter.normalizeOptions(options).decimalDigits).to(equal, 4);
+    });
+
+    it("ignores pure optional zeros", function() {
+      var options = {format: "##.###"}
+      expect($.numberFormatter.normalizeOptions(options).decimalDigits).to(equal, 0);
     });
 
     it("detects absence digit groups", function() {
       var options = {format: "##"}
-      $.numberFormatter.normalizeOptions(options);
-      expect(options.digitsPerGroup).to(equal, null);
+      expect($.numberFormatter.normalizeOptions(options).digitsPerGroup).to(equal, null);
     });
 
     it("detects presence of digit groups", function() {
       var options = {format: "#,#####"}
-      $.numberFormatter.normalizeOptions(options);
-      expect(options.digitsPerGroup).to(equal, 5);
+      expect($.numberFormatter.normalizeOptions(options).digitsPerGroup).to(equal, 5);
+    });
+
+  });
+     
+  describe("times100",function() {
+
+    it ("works without decimal point", function() {
+      expect($.numberFormatter.times100("10")).to(equal, "1000");
+    });
+
+    it ("works with decimal point", function() {
+      expect($.numberFormatter.times100("3.14159")).to(equal, "314.15900");
     });
 
   });
@@ -39,23 +53,23 @@ Screw.Unit(function(){
   describe("numberFormatter.formatNumber", function() {
     
     it("handles zero format digits", function() {
-      expect($.numberFormatter.formatNumber("123.45", {decimalDigits: 0})).to(equal, "123");
+      expect($.numberFormatter.formatNumber("123.45", {decimalDigits: 0, dec: "."})).to(equal, "123");
     });
 
     it("handles a few format digits", function() {
-      expect($.numberFormatter.formatNumber("0.0136", {decimalDigits: 2})).to(equal, "0.01");
+      expect($.numberFormatter.formatNumber("0.0136", {decimalDigits: 2, dec: "."})).to(equal, "0.01");
     });
 
     it("handles a lot of format digits", function() {
-      expect($.numberFormatter.formatNumber("1.01234567890001", {decimalDigits: 14})).to(equal, "1.01234567890001");
+      expect($.numberFormatter.formatNumber("1.01234567890001", {decimalDigits: 14, dec: "."})).to(equal, "1.01234567890001");
     });
 
     it("handles more format digits than actual digits", function() {
-      expect($.numberFormatter.formatNumber("1.5", {decimalDigits: 8})).to(equal, "1.50000000");
+      expect($.numberFormatter.formatNumber("1.5", {decimalDigits: 8, dec: "."})).to(equal, "1.50000000");
     });
 
     it("rounds correctly", function() {
-      expect($.numberFormatter.formatNumber("1.875", {decimalDigits: 2})).to(equal, "1.88");
+      expect($.numberFormatter.formatNumber("1.875", {decimalDigits: 2, dec: "."})).to(equal, "1.88");
     });
     
   });
@@ -98,10 +112,10 @@ Screw.Unit(function(){
   });
   
   describe("format", function(){
-    it("does not work with numbers with higher precision than floats", function(){
+    it("works with numbers with higher precision than floats", function(){
       $("#value").text("123456789.9876543210123456789");
       $("#value").format({format: "##.0000000000000000000"});
-      expect($("#value").text()).to_not(equal, "123456789.9876543210123456789");
+      expect($("#value").text()).to(equal, "123456789.9876543210123456789");
     });
 
     it("defaults to us #,###.00", function(){
@@ -139,7 +153,7 @@ Screw.Unit(function(){
       expect(function () {$("#value").format({format: "## AND ##"})}).to(throw_object, "invalid number format ## AND ##");
     });
 
-    it("default to not show decimal for whole numbers", function(){
+    it("defaults to not show decimal for whole numbers", function(){
       $("#value").text("15");
       $("#value").format({format: "#.##"});
       expect($("#value").text()).to(equal, "15");
