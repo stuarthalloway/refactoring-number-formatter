@@ -193,7 +193,6 @@
     nf.formatRight = function(right, options) {
       var digits = Math.max(options.decimalDigits, 
                             Math.min(options.optionalDecimalDigits || 0, right.length));
-      console.log("" + right + " " + options.decimalDigits + " " + options.optionalDecimalDigits + " " + right.length);                            
       return nf.pad(right.substring(0, digits), digits, "0");
     }
 
