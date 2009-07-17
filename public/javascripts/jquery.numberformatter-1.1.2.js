@@ -97,6 +97,43 @@
       }
       return result.substring(0, result.length - delim.length);
     }
+
+	 var us_et_al = { dec: ".", group: ",", neg: "-" }
+	 var eu_et_al = { dec: ",", group: ".", neg: "-" }
+	 var cz_et_al = { dec: ",", group: " ", neg: "-" }
+     nf.formatCodesTable = {
+	   us: us_et_al,
+       ae: us_et_al,
+       eg: us_et_al,
+       il: us_et_al,
+       jp: us_et_al,
+       sk: us_et_al,
+       th: us_et_al,
+       cn: us_et_al,
+       hk: us_et_al,
+       tw: us_et_al,
+       au: us_et_al,
+       ca: us_et_al,
+       gb: us_et_al,
+       "in": us_et_al,		//TODO: test unquoted in all browsers
+       de: eu_et_al,
+       vn: eu_et_al,
+       es: eu_et_al,
+       dk: eu_et_al,
+       at: eu_et_al,
+       gr: eu_et_al,
+       br: eu_et_al,
+       cz: cz_et_al,
+       fr: cz_et_al,
+       fi: cz_et_al,
+       ru: cz_et_al,
+       se: cz_et_al,
+       ch: {group: "'", dec: ".", neg: "-"}
+    };  
+
+    nf.formatCodes = function(s) {
+	  return nf.formatCodesTable[s] || nf.formatCodesTable["us"];
+    };
     
     nf.bumpTable = {
       "0": "1",
@@ -172,7 +209,7 @@
       options.optionalDecimalDigits = nf.countOptionalDecimalDigits(options.format);
       options.digitsPerGroup = nf.countDigitsPerGroup(options.format);  
       
-      var formatData = formatCodes(options.locale.toLowerCase());
+      var formatData = nf.formatCodes(options.locale.toLowerCase());
       options.dec = formatData.dec;
       options.group = formatData.group;
       options.neg = formatData.neg; 
@@ -213,77 +250,12 @@
     }  
 
 
-     function FormatData(dec, group, neg) {
-       this.dec = dec;
-       this.group = group;
-       this.neg = neg;
-     };
-
-     function formatCodes(locale) {
-
-         // default values
-         var dec = ".";
-         var group = ",";
-         var neg = "-";
-
-         if (locale == "us" ||
-             locale == "ae" ||
-             locale == "eg" ||
-             locale == "il" ||
-             locale == "jp" ||
-             locale == "sk" ||
-             locale == "th" ||
-             locale == "cn" ||
-             locale == "hk" ||
-             locale == "tw" ||
-             locale == "au" ||
-             locale == "ca" ||
-             locale == "gb" ||
-             locale == "in"
-            )
-         {
-              dec = ".";
-              group = ",";
-         }
-
-         else if (locale == "de" ||
-             locale == "vn" ||
-             locale == "es" ||
-             locale == "dk" ||
-             locale == "at" ||
-             locale == "gr" ||
-             locale == "br"
-            )
-         {
-              dec = ",";
-              group = ".";
-         }
-         else if (locale == "cz" ||
-              locale == "fr" ||
-             locale == "fi" ||
-             locale == "ru" ||
-             locale == "se"
-            )
-         {
-              group = " ";
-              dec = ",";
-         }
-         else if (locale == "ch")
-          {
-              group = "'";
-              dec = ".";
-          }
-
-        return new FormatData(dec, group, neg);
-
-    };  
-
 
  jQuery.fn.parse = function(options) {
 
      var options = jQuery.extend({},jQuery.fn.parse.defaults, options);
 
-     var formatData = formatCodes(options.locale.toLowerCase());
+     var formatData = nf.formatCodes(options.locale.toLowerCase());
 
      var dec = formatData.dec;
      var group = formatData.group;

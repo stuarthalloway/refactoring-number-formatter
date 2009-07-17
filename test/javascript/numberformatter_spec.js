@@ -38,6 +38,35 @@ Screw.Unit(function(){
 
   });
   
+  describe("formatCodes", function() {
+	it("knows us and friends", function() {
+      expect($.numberFormatter.formatCodes("en")).to(
+		equal,  { dec: ".", group: ",", neg: "-" });
+	});
+
+	it("knows es and friends", function() {
+      expect($.numberFormatter.formatCodes("es")).to(
+		equal,  { dec: ",", group: ".", neg: "-" });
+	});
+
+	it("knows cz and friends", function() {
+      expect($.numberFormatter.formatCodes("cz")).to(
+		equal,  { dec: ",", group: " ", neg: "-" });
+	});
+
+	it("knows ch and friends", function() {
+      expect($.numberFormatter.formatCodes("ch")).to(
+		equal,  { dec: ".", group: "'", neg: "-" });
+	});
+
+	// TD: added during refactoring, would like to see this throw error
+	it("brooks no nonsense", function() {
+      expect($.numberFormatter.formatCodes("splat")).to(
+		equal,  { dec: ".", group: ",", neg: "-" });
+	});
+	
+  });
+
   describe("numberFormatter.bump", function() {
 
     it("bumps", function() {
